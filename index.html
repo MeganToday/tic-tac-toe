@@ -464,11 +464,11 @@
     gameId = gRef.key;
 
     await set(gRef, {
-      board: Array(9).fill(null),
+      board: '.........',
       current: 'X',
       gameOver: false,
-      winner: null,
-      winCombo: null,
+      winner: '',
+      winCombo: '',
       players: { X: { id: xId, username: xName }, O: { id: oId, username: oName } },
       scores: { X: 0, O: 0, D: 0 },
       playAgain: { X: false, O: false },
@@ -512,22 +512,23 @@
   function renderGame(game) {
     const cells = document.querySelectorAll('.cell');
     const myTurn = !game.gameOver && game.current === myRole;
+    const board = game.board || '.........';
+    const winIndices = game.winCombo ? game.winCombo.split(',').map(Number) : [];
 
     cells.forEach((cell, i) => {
-      const val = game.board[i] || '';
+      const val = board[i] === '.' ? '' : board[i];
       cell.textContent = val;
       cell.className = 'cell' + (val ? ` ${val.toLowerCase()} taken` : '') + (myTurn ? '' : ' disabled');
     });
 
-    if (game.winCombo) {
-      game.winCombo.forEach(i => cells[i].classList.add('win'));
-    }
+    winIndices.forEach(i => cells[i].classList.add('win'));
 
     const status = document.getElementById('status');
     if (game.gameOver) {
       status.innerHTML = game.winner
         ? `<strong>${game.players[game.winner].username}</strong> wins!`
         : "It's a draw!";
+
 
       document.getElementById('play-again-area').style.display = 'block';
 
@@ -564,24 +565,26 @@
     if (!game || game.gameOver || game.current !== myRole) return;
 
     const i = parseInt(cell.dataset.i);
-    if (game.board[i]) return;
+    const board = game.board || '.........';
+    if (board[i] !== '.') return;
 
-    const newBoard = [...game.board];
+    const newBoard = board.split('');
     newBoard[i] = myRole;
+    const newBoardStr = newBoard.join('');
 
     const winCombo = WINS.find(combo => combo.every(idx => newBoard[idx] === myRole)) || null;
-    const isDraw = !winCombo && newBoard.every(v => v);
+    const isDraw = !winCombo && newBoard.every(v => v !== '.');
 
     const newScores = { ...game.scores };
     if (winCombo) newScores[myRole]++;
     if (isDraw) newScores.D++;
 
     await update(gameRef, {
-      board: newBoard,
+      board: newBoardStr,
       current: myRole === 'X' ? 'O' : 'X',
       gameOver: !!(winCombo || isDraw),
-      winner: winCombo ? myRole : null,
-      winCombo: winCombo || null,
+      winner: winCombo ? myRole : '',
+      winCombo: winCombo ? winCombo.join(',') : '',
       scores: newScores
     });
   });
@@ -605,11 +608,11 @@
         playAgainWatcher = null;
         if (myRole === 'X') {
           await update(gameRef, {
-            board: Array(9).fill(null),
+            board: '.........',
             current: 'X',
             gameOver: false,
-            winner: null,
-            winCombo: null,
+            winner: '',
+            winCombo: '',
             playAgain: { X: false, O: false }
           });
         }

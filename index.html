@@ -29,7 +29,7 @@
     .screen { display: none; }
     .screen.active { display: block; }
 
-    /* username screen */
+    /* ── username screen ── */
     #screen-username p { color: #a8dadc; margin-bottom: 1.5rem; font-size: 1.1rem; }
 
     #screen-username input {
@@ -48,10 +48,9 @@
 
     #screen-username input:focus { border-color: #a8dadc; }
 
-    /* waiting room */
+    /* ── waiting room ── */
     #screen-waiting h2 { color: #a8dadc; margin-bottom: 0.4rem; font-size: 1.3rem; }
     #waiting-subtitle { color: #888; font-size: 0.9rem; margin-bottom: 1.2rem; }
-
     #player-list { list-style: none; margin: 0 auto 1.5rem; max-width: 320px; }
 
     #player-list li {
@@ -79,7 +78,7 @@
 
     #waiting-status { color: #a8dadc; font-size: 0.95rem; min-height: 1.4rem; margin-bottom: 0.5rem; }
 
-    /* modal */
+    /* ── modal ── */
     #modal-overlay {
       display: none;
       position: fixed;
@@ -106,10 +105,8 @@
     .modal-box p { color: #eee; margin-bottom: 1.4rem; }
     .modal-actions { display: flex; gap: 1rem; justify-content: center; }
     .modal-actions button { min-width: 100px; }
-    .btn-secondary { background: #0f3460; }
-    .btn-secondary:hover { background: #1a4a80; }
 
-    /* game screen */
+    /* ── game screen ── */
     #screen-game .game-header {
       display: flex;
       justify-content: center;
@@ -123,6 +120,25 @@
     .player-tag.o { background: rgba(168,218,220,0.2); color: #a8dadc; }
 
     .status { font-size: 1.1rem; margin-bottom: 1.2rem; min-height: 1.6rem; color: #a8dadc; }
+
+    /* outcome banners */
+    #outcome-banner {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      min-height: 2rem;
+      letter-spacing: 1px;
+    }
+
+    #outcome-banner.win  { color: #ffd700; text-shadow: 0 0 16px rgba(255,215,0,0.6); animation: popIn 0.4s ease; }
+    #outcome-banner.lose { color: #888; }
+    #outcome-banner.draw { color: #a8dadc; }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.7); opacity: 0; }
+      70%  { transform: scale(1.1); }
+      100% { transform: scale(1);   opacity: 1; }
+    }
 
     .board {
       display: grid;
@@ -183,22 +199,69 @@
     .turn-x { background: #e94560; }
     .turn-o { background: #a8dadc; }
 
-    #play-again-area { margin-top: 0.8rem; }
-    #play-again-area p { color: #888; font-size: 0.9rem; margin-top: 0.5rem; min-height: 1.2rem; }
+    /* ── post-game buttons ── */
+    #post-game {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.8rem;
+    }
 
+    #post-game-status {
+      color: #888;
+      font-size: 0.9rem;
+      min-height: 1.2rem;
+      margin-bottom: 0.2rem;
+    }
+
+    /* ── rematch waiting state ── */
+    #rematch-waiting {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.8rem;
+    }
+
+    #rematch-waiting p { color: #a8dadc; font-size: 0.95rem; margin-bottom: 0.2rem; }
+
+    /* ── splash screen ── */
+    #screen-splash p {
+      color: #a8dadc;
+      font-size: 1.3rem;
+      margin-top: 0.5rem;
+    }
+
+    /* ── buttons ── */
     button {
       background: #e94560;
       color: #fff;
       border: none;
       border-radius: 8px;
-      padding: 0.7rem 2rem;
+      padding: 0.7rem 1.6rem;
       font-size: 1rem;
       cursor: pointer;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       transition: background 0.2s, transform 0.1s;
     }
 
     button:hover { background: #c73652; transform: scale(1.04); }
+    button:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+    .btn-secondary { background: #0f3460; }
+    .btn-secondary:hover { background: #1a4a80; }
+
+    .btn-ghost {
+      background: transparent;
+      color: #888;
+      font-size: 0.9rem;
+      padding: 0.4rem 1rem;
+      letter-spacing: 0;
+      border: 1px solid #333;
+    }
+
+    .btn-ghost:hover { background: #16213e; color: #eee; transform: none; }
   </style>
 </head>
 <body>
@@ -243,6 +306,7 @@
       </div>
     </div>
 
+    <div id="outcome-banner"></div>
     <div class="status" id="status"></div>
 
     <div class="board" id="board">
@@ -257,10 +321,25 @@
       <div class="cell" data-i="8"></div>
     </div>
 
-    <div id="play-again-area" style="display:none">
-      <button id="play-again-btn">Play Again</button>
-      <p id="play-again-status"></p>
+    <!-- Post-game options -->
+    <div id="post-game">
+      <div id="post-game-status"></div>
+      <button id="btn-play-again">Play Again</button>
+      <button id="btn-play-someone-else" class="btn-secondary">Play Someone Else</button>
+      <button id="btn-exit-game" class="btn-ghost">Exit Game</button>
     </div>
+
+    <!-- Rematch waiting state (after sending play-again invite) -->
+    <div id="rematch-waiting">
+      <p id="rematch-status">Invitation sent! Waiting for response…</p>
+      <button id="btn-rematch-someone-else" class="btn-secondary">Play Someone Else</button>
+      <button id="btn-rematch-exit" class="btn-ghost">Exit Game</button>
+    </div>
+  </div>
+
+  <!-- Splash screen -->
+  <div class="screen" id="screen-splash">
+    <p>Thanks for playing!</p>
   </div>
 </div>
 
@@ -304,12 +383,13 @@
   let myId = null;
   let myUsername = null;
   let myRole = null;
+  let opponentId = null;
+  let opponentUsername = null;
   let gameId = null;
   let gameRef = null;
   let gameListener = null;
-  let playAgainVote = false;
-  let playAgainWatcher = null;
-  let playAgainTimeout = null;
+  let rematchInviteRef = null;
+  let rematchInviteWatcher = null;
 
   // ── screen helpers ──
 
@@ -439,7 +519,6 @@
     });
   }
 
-  // Invitee watches their own player node; the inviter will write gameId there after creating the game.
   function watchForGameStart() {
     const myPlayerRef = ref(db, `players/${myId}`);
     onValue(myPlayerRef, snapshot => {
@@ -452,6 +531,9 @@
         if (!game) return;
         gameId = data.gameId;
         myRole = game.players.O.id === myId ? 'O' : 'X';
+        const theirRole = myRole === 'X' ? 'O' : 'X';
+        opponentId = game.players[theirRole].id;
+        opponentUsername = game.players[theirRole].username;
         enterGame(gameId, game.players.X.username, game.players.O.username);
       });
     });
@@ -471,7 +553,6 @@
       winCombo: '',
       players: { X: { id: xId, username: xName }, O: { id: oId, username: oName } },
       scores: { X: 0, O: 0, D: 0 },
-      playAgain: { X: false, O: false },
       createdAt: serverTimestamp()
     });
 
@@ -483,6 +564,8 @@
     await remove(ref(db, `invites/${inviteId}`));
 
     myRole = 'X';
+    opponentId = oId;
+    opponentUsername = oName;
     enterGame(gameId, xName, oName);
   }
 
@@ -494,10 +577,13 @@
 
     document.getElementById('tag-x').textContent = `X: ${xName}`;
     document.getElementById('tag-o').textContent = `O: ${oName}`;
-    document.getElementById('play-again-area').style.display = 'none';
-    document.getElementById('play-again-status').textContent = '';
-    document.getElementById('play-again-btn').disabled = false;
-    playAgainVote = false;
+    document.getElementById('outcome-banner').textContent = '';
+    document.getElementById('outcome-banner').className = '';
+    document.getElementById('post-game').style.display = 'none';
+    document.getElementById('rematch-waiting').style.display = 'none';
+    document.getElementById('post-game-status').textContent = '';
+    document.getElementById('btn-play-again').disabled = false;
+    document.getElementById('btn-play-again').textContent = `Play ${opponentUsername} Again`;
 
     if (gameListener) off(gameRef);
     gameListener = onValue(gameRef, snapshot => {
@@ -524,29 +610,34 @@
     winIndices.forEach(i => cells[i].classList.add('win'));
 
     const status = document.getElementById('status');
+    const banner = document.getElementById('outcome-banner');
+
     if (game.gameOver) {
-      status.innerHTML = game.winner
-        ? `<strong>${game.players[game.winner].username}</strong> wins!`
-        : "It's a draw!";
+      const iWon  = game.winner === myRole;
+      const isDraw = !game.winner;
 
-
-      document.getElementById('play-again-area').style.display = 'block';
-
-      const pa = game.playAgain || {};
-      const theirRole = myRole === 'X' ? 'O' : 'X';
-      const theirName = game.players[theirRole].username;
-
-      if (pa[myRole] && !pa[theirRole]) {
-        document.getElementById('play-again-status').textContent = `Waiting for ${theirName}…`;
-      } else if (!pa[myRole] && pa[theirRole]) {
-        document.getElementById('play-again-status').textContent = `${theirName} wants to play again!`;
-      } else if (pa[myRole] && pa[theirRole]) {
-        document.getElementById('play-again-status').textContent = 'Starting new game…';
+      if (isDraw) {
+        banner.textContent = "It's a draw!";
+        banner.className = 'draw';
+        status.textContent = '';
+      } else if (iWon) {
+        banner.textContent = '🎉 You win!';
+        banner.className = 'win';
+        status.textContent = '';
+      } else {
+        banner.textContent = 'Better luck next time.';
+        banner.className = 'lose';
+        status.textContent = '';
       }
+
+      document.getElementById('post-game').style.display = 'flex';
     } else {
+      banner.textContent = '';
+      banner.className = '';
       const dot = `<span class="turn-indicator turn-${game.current.toLowerCase()}"></span>`;
       const turnName = game.players[game.current].username;
       status.innerHTML = `${dot} ${game.current === myRole ? 'Your turn' : `${turnName}'s turn`}`;
+      document.getElementById('post-game').style.display = 'none';
     }
 
     document.getElementById('score-x').textContent = game.scores.X;
@@ -589,54 +680,88 @@
     });
   });
 
-  // ── play again ──
+  // ── post-game: play opponent again ──
 
-  document.getElementById('play-again-btn').addEventListener('click', async () => {
-    if (playAgainVote) return;
-    playAgainVote = true;
-    document.getElementById('play-again-btn').disabled = true;
+  document.getElementById('btn-play-again').addEventListener('click', async () => {
+    document.getElementById('btn-play-again').disabled = true;
 
-    await update(ref(db, `games/${gameId}/playAgain`), { [myRole]: true });
+    // Send a rematch invite to the opponent
+    rematchInviteRef = push(ref(db, 'invites'));
+    const inviteId = rematchInviteRef.key;
 
-    // Watch for the other player's vote
-    const paRef = ref(db, `games/${gameId}/playAgain`);
-    playAgainWatcher = onValue(paRef, async snapshot => {
-      const votes = snapshot.val() || {};
-      if (votes.X && votes.O) {
-        off(paRef);
-        clearTimeout(playAgainTimeout);
-        playAgainWatcher = null;
-        if (myRole === 'X') {
-          await update(gameRef, {
-            board: '.........',
-            current: 'X',
-            gameOver: false,
-            winner: '',
-            winCombo: '',
-            playAgain: { X: false, O: false }
-          });
-        }
-        playAgainVote = false;
-        document.getElementById('play-again-btn').disabled = false;
-      }
+    await set(rematchInviteRef, {
+      from: myId,
+      fromUsername: myUsername,
+      to: opponentId,
+      toUsername: opponentUsername,
+      status: 'pending',
+      rematch: true,
+      createdAt: serverTimestamp()
     });
 
-    // 30s timeout — return to waiting room if other player doesn't respond
-    playAgainTimeout = setTimeout(async () => {
-      if (playAgainWatcher) { off(paRef); playAgainWatcher = null; }
-      await leaveGame();
-    }, 30000);
+    // Switch to rematch-waiting UI
+    document.getElementById('post-game').style.display = 'none';
+    document.getElementById('rematch-waiting').style.display = 'flex';
+    document.getElementById('rematch-status').textContent = `Invitation sent to ${opponentUsername}! Waiting for response…`;
+
+    rematchInviteWatcher = onValue(rematchInviteRef, async snapshot => {
+      const invite = snapshot.val();
+      if (!invite) { off(rematchInviteRef); return; }
+
+      if (invite.status === 'accepted') {
+        off(rematchInviteRef);
+        rematchInviteWatcher = null;
+        // Clean up old game, start fresh
+        if (gameListener && gameRef) { off(gameRef); gameListener = null; }
+        await startGame(inviteId, myId, opponentId, myUsername, opponentUsername);
+      } else if (invite.status === 'declined') {
+        off(rematchInviteRef);
+        rematchInviteWatcher = null;
+        document.getElementById('rematch-status').textContent = `${opponentUsername} declined. Choose another option below.`;
+        await remove(rematchInviteRef);
+      }
+    });
   });
 
-  async function leaveGame() {
-    clearTimeout(playAgainTimeout);
+  // ── post-game: play someone else ──
+
+  document.getElementById('btn-play-someone-else').addEventListener('click', () => goToWaitingRoom());
+  document.getElementById('btn-rematch-someone-else').addEventListener('click', async () => {
+    await cancelRematchInvite();
+    goToWaitingRoom();
+  });
+
+  // ── post-game: exit ──
+
+  document.getElementById('btn-exit-game').addEventListener('click', () => exitGame());
+  document.getElementById('btn-rematch-exit').addEventListener('click', async () => {
+    await cancelRematchInvite();
+    exitGame();
+  });
+
+  async function cancelRematchInvite() {
+    if (rematchInviteWatcher && rematchInviteRef) {
+      off(rematchInviteRef);
+      rematchInviteWatcher = null;
+      await remove(rematchInviteRef);
+      rematchInviteRef = null;
+    }
+  }
+
+  async function goToWaitingRoom() {
     if (gameListener && gameRef) { off(gameRef); gameListener = null; }
-
     await update(ref(db, `players/${myId}`), { status: 'waiting', gameId: null });
-
-    playAgainVote = false;
-    document.getElementById('play-again-area').style.display = 'none';
+    document.getElementById('post-game').style.display = 'none';
+    document.getElementById('rematch-waiting').style.display = 'none';
     showScreen('screen-waiting');
+  }
+
+  async function exitGame() {
+    if (gameListener && gameRef) { off(gameRef); gameListener = null; }
+    await remove(ref(db, `players/${myId}`));
+    document.getElementById('post-game').style.display = 'none';
+    document.getElementById('rematch-waiting').style.display = 'none';
+    showScreen('screen-splash');
   }
 </script>
 </body>

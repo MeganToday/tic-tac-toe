@@ -32,10 +32,21 @@ The entire app lives in a single file: `index.html`. It is structured in three s
 
 ## Git workflow
 
-This repo is pushed to GitHub at `https://github.com/MeganToday/tic-tac-toe`. After every change, commit with a descriptive message and push:
+This repo is pushed to GitHub at `https://github.com/MeganToday/tic-tac-toe`.
+
+**Commit and push after every meaningful unit of work** — do not batch multiple unrelated changes into one commit, and do not leave work uncommitted at the end of a session. This ensures we can always revert to a known-good state and never lose progress.
+
+Commit messages must be clear and specific about what changed and why:
 
 ```
 git add index.html
 git commit -m "short description of what changed and why"
 git push
 ```
+
+Examples of good commit messages:
+- `Add AI opponent with minimax algorithm`
+- `Fix win detection not highlighting diagonal combos`
+- `Style score panel with player colors`
+
+After completing any feature, bug fix, or meaningful improvement — commit and push immediately before moving on to the next task.

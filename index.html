@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tic Tac Toe</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -21,9 +17,7 @@
       color: #eee;
     }
 
-    .container {
-      text-align: center;
-    }
+    .container { text-align: center; width: 100%; max-width: 480px; padding: 1rem; }
 
     h1 {
       font-size: 2.5rem;
@@ -32,12 +26,103 @@
       color: #e94560;
     }
 
-    .status {
-      font-size: 1.2rem;
-      margin-bottom: 1.5rem;
-      min-height: 1.8rem;
-      color: #a8dadc;
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* username screen */
+    #screen-username p { color: #a8dadc; margin-bottom: 1.5rem; font-size: 1.1rem; }
+
+    #screen-username input {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      color: #eee;
+      font-size: 1.1rem;
+      padding: 0.6rem 1rem;
+      width: 100%;
+      max-width: 280px;
+      margin-bottom: 1rem;
+      outline: none;
+      text-align: center;
     }
+
+    #screen-username input:focus { border-color: #a8dadc; }
+
+    /* waiting room */
+    #screen-waiting h2 { color: #a8dadc; margin-bottom: 0.4rem; font-size: 1.3rem; }
+    #waiting-subtitle { color: #888; font-size: 0.9rem; margin-bottom: 1.2rem; }
+
+    #player-list { list-style: none; margin: 0 auto 1.5rem; max-width: 320px; }
+
+    #player-list li {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 0.7rem 1.2rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #player-list li .pname { color: #eee; }
+    #player-list li .pname.me { color: #888; font-style: italic; }
+
+    #player-list li button.invite-btn {
+      padding: 0.3rem 0.9rem;
+      font-size: 0.85rem;
+      background: #0f3460;
+      letter-spacing: 0;
+    }
+
+    #player-list li button.invite-btn:hover { background: #1a4a80; }
+    #player-list li button.invite-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+    #waiting-status { color: #a8dadc; font-size: 0.95rem; min-height: 1.4rem; margin-bottom: 0.5rem; }
+
+    /* modal */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    #modal-overlay.active { display: flex; }
+
+    .modal-box {
+      background: #16213e;
+      border-radius: 14px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      border: 1px solid #0f3460;
+    }
+
+    .modal-box h3 { color: #a8dadc; margin-bottom: 0.8rem; font-size: 1.2rem; }
+    .modal-box p { color: #eee; margin-bottom: 1.4rem; }
+    .modal-actions { display: flex; gap: 1rem; justify-content: center; }
+    .modal-actions button { min-width: 100px; }
+    .btn-secondary { background: #0f3460; }
+    .btn-secondary:hover { background: #1a4a80; }
+
+    /* game screen */
+    #screen-game .game-header {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .player-tag { padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; }
+    .player-tag.x { background: rgba(233,69,96,0.2); color: #e94560; }
+    .player-tag.o { background: rgba(168,218,220,0.2); color: #a8dadc; }
+
+    .status { font-size: 1.1rem; margin-bottom: 1.2rem; min-height: 1.6rem; color: #a8dadc; }
 
     .board {
       display: grid;
@@ -61,23 +146,11 @@
       user-select: none;
     }
 
-    .cell:hover:not(.taken) {
-      background: #0f3460;
-      transform: scale(1.05);
-    }
-
-    .cell.x {
-      color: #e94560;
-    }
-
-    .cell.o {
-      color: #a8dadc;
-    }
-
-    .cell.win {
-      background: #0f3460;
-      animation: pulse 0.4s ease;
-    }
+    .cell:hover:not(.taken):not(.disabled) { background: #0f3460; transform: scale(1.05); }
+    .cell.disabled { cursor: default; }
+    .cell.x { color: #e94560; }
+    .cell.o { color: #a8dadc; }
+    .cell.win { background: #0f3460; animation: pulse 0.4s ease; }
 
     @keyframes pulse {
       0%   { transform: scale(1); }
@@ -89,31 +162,29 @@
       display: flex;
       justify-content: center;
       gap: 2rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.2rem;
     }
 
-    .score-box {
-      background: #16213e;
-      border-radius: 10px;
-      padding: 0.6rem 1.4rem;
-      min-width: 80px;
-    }
-
-    .score-box .label {
-      font-size: 0.75rem;
-      letter-spacing: 2px;
-      color: #888;
-      text-transform: uppercase;
-    }
-
-    .score-box .value {
-      font-size: 1.8rem;
-      font-weight: bold;
-    }
-
+    .score-box { background: #16213e; border-radius: 10px; padding: 0.5rem 1.2rem; min-width: 80px; }
+    .score-box .label { font-size: 0.75rem; letter-spacing: 2px; color: #888; text-transform: uppercase; }
+    .score-box .value { font-size: 1.8rem; font-weight: bold; }
     .score-box.x-score .value { color: #e94560; }
     .score-box.o-score .value { color: #a8dadc; }
     .score-box.draw-score .value { color: #888; }
+
+    .turn-indicator {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .turn-x { background: #e94560; }
+    .turn-o { background: #a8dadc; }
+
+    #play-again-area { margin-top: 0.8rem; }
+    #play-again-area p { color: #888; font-size: 0.9rem; margin-top: 0.5rem; min-height: 1.2rem; }
 
     button {
       background: #e94560;
@@ -127,27 +198,35 @@
       transition: background 0.2s, transform 0.1s;
     }
 
-    button:hover {
-      background: #c73652;
-      transform: scale(1.04);
-    }
-
-    .turn-indicator {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-
-    .turn-x { background: #e94560; }
-    .turn-o { background: #a8dadc; }
+    button:hover { background: #c73652; transform: scale(1.04); }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>TIC TAC TOE</h1>
+<div class="container">
+  <h1>TIC TAC TOE</h1>
+
+  <!-- Username screen -->
+  <div class="screen active" id="screen-username">
+    <p>Welcome to Tic Tac Toe. What is your username?</p>
+    <input type="text" id="username-input" placeholder="Enter username" maxlength="20" autocomplete="off" />
+    <br>
+    <button id="username-btn">Join</button>
+  </div>
+
+  <!-- Waiting room -->
+  <div class="screen" id="screen-waiting">
+    <h2>Waiting Room</h2>
+    <p id="waiting-subtitle">Waiting for other players to join…</p>
+    <div id="waiting-status"></div>
+    <ul id="player-list"></ul>
+  </div>
+
+  <!-- Game screen -->
+  <div class="screen" id="screen-game">
+    <div class="game-header">
+      <span class="player-tag x" id="tag-x">X: —</span>
+      <span class="player-tag o" id="tag-o">O: —</span>
+    </div>
 
     <div class="scores">
       <div class="score-box x-score">
@@ -178,85 +257,384 @@
       <div class="cell" data-i="8"></div>
     </div>
 
-    <button id="reset-btn">New Game</button>
+    <div id="play-again-area" style="display:none">
+      <button id="play-again-btn">Play Again</button>
+      <p id="play-again-status"></p>
+    </div>
   </div>
+</div>
 
-  <script>
-    const WINS = [
-      [0,1,2],[3,4,5],[6,7,8],
-      [0,3,6],[1,4,7],[2,5,8],
-      [0,4,8],[2,4,6]
-    ];
+<!-- Invite modal -->
+<div id="modal-overlay">
+  <div class="modal-box">
+    <h3 id="modal-title">Game Invitation</h3>
+    <p id="modal-body"></p>
+    <div class="modal-actions">
+      <button id="modal-accept">Accept</button>
+      <button id="modal-decline" class="btn-secondary">Decline</button>
+    </div>
+  </div>
+</div>
 
-    let board, current, gameOver, scores;
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import {
+    getDatabase, ref, set, get, push, onValue, onDisconnect,
+    remove, update, serverTimestamp, off
+  } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-    function init() {
-      board = Array(9).fill(null);
-      current = 'X';
-      gameOver = false;
-      if (!scores) scores = { X: 0, O: 0, D: 0 };
-      render();
-    }
+  const app = initializeApp({
+    apiKey: "AIzaSyARqWmYX3K6cIjyor7Km5rNSSQyMdL1d7w",
+    authDomain: "mt-s-project.firebaseapp.com",
+    databaseURL: "https://mt-s-project-default-rtdb.firebaseio.com",
+    projectId: "mt-s-project",
+    storageBucket: "mt-s-project.firebasestorage.app",
+    messagingSenderId: "585967322120",
+    appId: "1:585967322120:web:a74151e658c89d467e3dbd"
+  });
 
-    function render() {
-      const cells = document.querySelectorAll('.cell');
-      cells.forEach((cell, i) => {
-        cell.textContent = board[i] || '';
-        cell.className = 'cell' + (board[i] ? ` ${board[i].toLowerCase()} taken` : '');
+  const db = getDatabase(app);
+
+  const WINS = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  let myId = null;
+  let myUsername = null;
+  let myRole = null;
+  let gameId = null;
+  let gameRef = null;
+  let gameListener = null;
+  let playAgainVote = false;
+  let playAgainWatcher = null;
+  let playAgainTimeout = null;
+
+  // ── screen helpers ──
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function showModal(title, body, onAccept, onDecline) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').textContent = body;
+    document.getElementById('modal-overlay').classList.add('active');
+    document.getElementById('modal-accept').onclick = () => { hideModal(); onAccept(); };
+    document.getElementById('modal-decline').onclick = () => { hideModal(); onDecline(); };
+  }
+
+  function hideModal() {
+    document.getElementById('modal-overlay').classList.remove('active');
+  }
+
+  // ── join ──
+
+  async function join() {
+    const input = document.getElementById('username-input');
+    const name = input.value.trim();
+    if (!name) return;
+
+    myUsername = name;
+    const playerRef = push(ref(db, 'players'));
+    myId = playerRef.key;
+
+    await set(playerRef, { username: name, status: 'waiting', joinedAt: serverTimestamp() });
+    onDisconnect(playerRef).remove();
+
+    showScreen('screen-waiting');
+    listenForPlayers();
+    listenForInvites();
+  }
+
+  document.getElementById('username-btn').addEventListener('click', join);
+  document.getElementById('username-input').addEventListener('keydown', e => { if (e.key === 'Enter') join(); });
+
+  // ── waiting room ──
+
+  function listenForPlayers() {
+    onValue(ref(db, 'players'), snapshot => {
+      const data = snapshot.val() || {};
+      const list = document.getElementById('player-list');
+      list.innerHTML = '';
+
+      Object.entries(data).forEach(([id, player]) => {
+        if (player.status !== 'waiting') return;
+        const li = document.createElement('li');
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'pname' + (id === myId ? ' me' : '');
+        nameSpan.textContent = id === myId ? `${player.username} (you)` : player.username;
+        li.appendChild(nameSpan);
+
+        if (id !== myId) {
+          const btn = document.createElement('button');
+          btn.className = 'invite-btn';
+          btn.textContent = 'Invite';
+          btn.addEventListener('click', () => sendInvite(id, player.username));
+          li.appendChild(btn);
+        }
+
+        list.appendChild(li);
       });
 
-      const status = document.getElementById('status');
-      if (!gameOver) {
-        const dot = `<span class="turn-indicator turn-${current.toLowerCase()}"></span>`;
-        status.innerHTML = `${dot} Player <strong>${current}</strong>'s turn`;
-      }
+      const waitingCount = Object.values(data).filter(p => p.status === 'waiting').length;
+      document.getElementById('waiting-subtitle').textContent = waitingCount <= 1
+        ? 'Waiting for other players to join…'
+        : 'Click a player to invite them to a game.';
+    });
+  }
 
-      document.getElementById('score-x').textContent = scores.X;
-      document.getElementById('score-o').textContent = scores.O;
-      document.getElementById('score-draw').textContent = scores.D;
+  async function sendInvite(toId, toUsername) {
+    document.getElementById('waiting-status').textContent = `Invite sent to ${toUsername}…`;
+
+    const inviteRef = push(ref(db, 'invites'));
+    const inviteId = inviteRef.key;
+
+    await set(inviteRef, {
+      from: myId,
+      fromUsername: myUsername,
+      to: toId,
+      toUsername,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+
+    onValue(inviteRef, async snapshot => {
+      const invite = snapshot.val();
+      if (!invite) { off(inviteRef); return; }
+
+      if (invite.status === 'accepted') {
+        off(inviteRef);
+        document.getElementById('waiting-status').textContent = '';
+        await startGame(inviteId, myId, toId, myUsername, toUsername);
+      } else if (invite.status === 'declined') {
+        off(inviteRef);
+        document.getElementById('waiting-status').textContent = `${toUsername} declined your invite.`;
+        await remove(inviteRef);
+      }
+    });
+  }
+
+  function listenForInvites() {
+    onValue(ref(db, 'invites'), snapshot => {
+      const data = snapshot.val() || {};
+      Object.entries(data).forEach(([id, invite]) => {
+        if (invite.to !== myId || invite.status !== 'pending') return;
+
+        showModal(
+          'Game Invitation',
+          `${invite.fromUsername} wants to play Tic Tac Toe with you!`,
+          async () => {
+            await update(ref(db, `invites/${id}`), { status: 'accepted' });
+            watchForGameStart();
+          },
+          async () => {
+            await update(ref(db, `invites/${id}`), { status: 'declined' });
+          }
+        );
+      });
+    });
+  }
+
+  // Invitee watches their own player node; the inviter will write gameId there after creating the game.
+  function watchForGameStart() {
+    const myPlayerRef = ref(db, `players/${myId}`);
+    onValue(myPlayerRef, snapshot => {
+      const data = snapshot.val();
+      if (!data || data.status !== 'ingame' || !data.gameId) return;
+      off(myPlayerRef);
+
+      get(ref(db, `games/${data.gameId}`)).then(snap => {
+        const game = snap.val();
+        if (!game) return;
+        gameId = data.gameId;
+        myRole = game.players.O.id === myId ? 'O' : 'X';
+        enterGame(gameId, game.players.X.username, game.players.O.username);
+      });
+    });
+  }
+
+  // ── game setup ──
+
+  async function startGame(inviteId, xId, oId, xName, oName) {
+    const gRef = push(ref(db, 'games'));
+    gameId = gRef.key;
+
+    await set(gRef, {
+      board: Array(9).fill(null),
+      current: 'X',
+      gameOver: false,
+      winner: null,
+      winCombo: null,
+      players: { X: { id: xId, username: xName }, O: { id: oId, username: oName } },
+      scores: { X: 0, O: 0, D: 0 },
+      playAgain: { X: false, O: false },
+      createdAt: serverTimestamp()
+    });
+
+    await Promise.all([
+      update(ref(db, `players/${xId}`), { status: 'ingame', gameId }),
+      update(ref(db, `players/${oId}`), { status: 'ingame', gameId })
+    ]);
+
+    await remove(ref(db, `invites/${inviteId}`));
+
+    myRole = 'X';
+    enterGame(gameId, xName, oName);
+  }
+
+  // ── game screen ──
+
+  function enterGame(gId, xName, oName) {
+    gameId = gId;
+    gameRef = ref(db, `games/${gId}`);
+
+    document.getElementById('tag-x').textContent = `X: ${xName}`;
+    document.getElementById('tag-o').textContent = `O: ${oName}`;
+    document.getElementById('play-again-area').style.display = 'none';
+    document.getElementById('play-again-status').textContent = '';
+    document.getElementById('play-again-btn').disabled = false;
+    playAgainVote = false;
+
+    if (gameListener) off(gameRef);
+    gameListener = onValue(gameRef, snapshot => {
+      const game = snapshot.val();
+      if (!game) return;
+      renderGame(game);
+    });
+
+    showScreen('screen-game');
+  }
+
+  function renderGame(game) {
+    const cells = document.querySelectorAll('.cell');
+    const myTurn = !game.gameOver && game.current === myRole;
+
+    cells.forEach((cell, i) => {
+      const val = game.board[i] || '';
+      cell.textContent = val;
+      cell.className = 'cell' + (val ? ` ${val.toLowerCase()} taken` : '') + (myTurn ? '' : ' disabled');
+    });
+
+    if (game.winCombo) {
+      game.winCombo.forEach(i => cells[i].classList.add('win'));
     }
 
-    function checkWin(player) {
-      return WINS.find(combo => combo.every(i => board[i] === player)) || null;
+    const status = document.getElementById('status');
+    if (game.gameOver) {
+      status.innerHTML = game.winner
+        ? `<strong>${game.players[game.winner].username}</strong> wins!`
+        : "It's a draw!";
+
+      document.getElementById('play-again-area').style.display = 'block';
+
+      const pa = game.playAgain || {};
+      const theirRole = myRole === 'X' ? 'O' : 'X';
+      const theirName = game.players[theirRole].username;
+
+      if (pa[myRole] && !pa[theirRole]) {
+        document.getElementById('play-again-status').textContent = `Waiting for ${theirName}…`;
+      } else if (!pa[myRole] && pa[theirRole]) {
+        document.getElementById('play-again-status').textContent = `${theirName} wants to play again!`;
+      } else if (pa[myRole] && pa[theirRole]) {
+        document.getElementById('play-again-status').textContent = 'Starting new game…';
+      }
+    } else {
+      const dot = `<span class="turn-indicator turn-${game.current.toLowerCase()}"></span>`;
+      const turnName = game.players[game.current].username;
+      status.innerHTML = `${dot} ${game.current === myRole ? 'Your turn' : `${turnName}'s turn`}`;
     }
 
-    function handleClick(e) {
-      const cell = e.target.closest('.cell');
-      if (!cell || gameOver) return;
-      const i = parseInt(cell.dataset.i);
-      if (board[i]) return;
+    document.getElementById('score-x').textContent = game.scores.X;
+    document.getElementById('score-o').textContent = game.scores.O;
+    document.getElementById('score-draw').textContent = game.scores.D;
+  }
 
-      board[i] = current;
-      render();
+  // ── moves ──
 
-      const winCombo = checkWin(current);
-      if (winCombo) {
-        gameOver = true;
-        scores[current]++;
-        winCombo.forEach(i => document.querySelectorAll('.cell')[i].classList.add('win'));
-        document.getElementById('status').innerHTML =
-          `<strong>${current}</strong> wins! `;
-        document.getElementById('score-x').textContent = scores.X;
-        document.getElementById('score-o').textContent = scores.O;
-        return;
+  document.getElementById('board').addEventListener('click', async e => {
+    const cell = e.target.closest('.cell');
+    if (!cell || !gameRef) return;
+
+    const snap = await get(gameRef);
+    const game = snap.val();
+    if (!game || game.gameOver || game.current !== myRole) return;
+
+    const i = parseInt(cell.dataset.i);
+    if (game.board[i]) return;
+
+    const newBoard = [...game.board];
+    newBoard[i] = myRole;
+
+    const winCombo = WINS.find(combo => combo.every(idx => newBoard[idx] === myRole)) || null;
+    const isDraw = !winCombo && newBoard.every(v => v);
+
+    const newScores = { ...game.scores };
+    if (winCombo) newScores[myRole]++;
+    if (isDraw) newScores.D++;
+
+    await update(gameRef, {
+      board: newBoard,
+      current: myRole === 'X' ? 'O' : 'X',
+      gameOver: !!(winCombo || isDraw),
+      winner: winCombo ? myRole : null,
+      winCombo: winCombo || null,
+      scores: newScores
+    });
+  });
+
+  // ── play again ──
+
+  document.getElementById('play-again-btn').addEventListener('click', async () => {
+    if (playAgainVote) return;
+    playAgainVote = true;
+    document.getElementById('play-again-btn').disabled = true;
+
+    await update(ref(db, `games/${gameId}/playAgain`), { [myRole]: true });
+
+    // Watch for the other player's vote
+    const paRef = ref(db, `games/${gameId}/playAgain`);
+    playAgainWatcher = onValue(paRef, async snapshot => {
+      const votes = snapshot.val() || {};
+      if (votes.X && votes.O) {
+        off(paRef);
+        clearTimeout(playAgainTimeout);
+        playAgainWatcher = null;
+        if (myRole === 'X') {
+          await update(gameRef, {
+            board: Array(9).fill(null),
+            current: 'X',
+            gameOver: false,
+            winner: null,
+            winCombo: null,
+            playAgain: { X: false, O: false }
+          });
+        }
+        playAgainVote = false;
+        document.getElementById('play-again-btn').disabled = false;
       }
+    });
 
-      if (board.every(v => v)) {
-        gameOver = true;
-        scores.D++;
-        document.getElementById('status').textContent = "It's a draw!";
-        document.getElementById('score-draw').textContent = scores.D;
-        return;
-      }
+    // 30s timeout — return to waiting room if other player doesn't respond
+    playAgainTimeout = setTimeout(async () => {
+      if (playAgainWatcher) { off(paRef); playAgainWatcher = null; }
+      await leaveGame();
+    }, 30000);
+  });
 
-      current = current === 'X' ? 'O' : 'X';
-      render();
-    }
+  async function leaveGame() {
+    clearTimeout(playAgainTimeout);
+    if (gameListener && gameRef) { off(gameRef); gameListener = null; }
 
-    document.getElementById('board').addEventListener('click', handleClick);
-    document.getElementById('reset-btn').addEventListener('click', init);
+    await update(ref(db, `players/${myId}`), { status: 'waiting', gameId: null });
 
-    init();
-  </script>
+    playAgainVote = false;
+    document.getElementById('play-again-area').style.display = 'none';
+    showScreen('screen-waiting');
+  }
+</script>
 </body>
 </html>

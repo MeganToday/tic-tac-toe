@@ -533,15 +533,17 @@
   }
 
   function watchForGameStart() {
+    const previousGameId = gameId;
     const myPlayerRef = ref(db, `players/${myId}`);
     onValue(myPlayerRef, snapshot => {
       const data = snapshot.val();
-      if (!data || data.status !== 'ingame' || !data.gameId) return;
+      if (!data || !data.gameId || data.gameId === previousGameId) return;
       off(myPlayerRef);
 
       get(ref(db, `games/${data.gameId}`)).then(snap => {
         const game = snap.val();
         if (!game) return;
+        if (gameListener && gameRef) { off(gameRef); gameListener = null; }
         gameId = data.gameId;
         myRole = game.players.O.id === myId ? 'O' : 'X';
         const theirRole = myRole === 'X' ? 'O' : 'X';
@@ -588,10 +590,17 @@
     gameId = gId;
     gameRef = ref(db, `games/${gId}`);
 
+    // Clear board immediately so old state never shows during Firebase round-trip
+    document.querySelectorAll('.cell').forEach(cell => {
+      cell.textContent = '';
+      cell.className = 'cell disabled';
+    });
+
     document.getElementById('tag-x').textContent = `X: ${xName}`;
     document.getElementById('tag-o').textContent = `O: ${oName}`;
     document.getElementById('outcome-banner').textContent = '';
     document.getElementById('outcome-banner').className = '';
+    document.getElementById('status').textContent = '';
     document.getElementById('post-game').style.display = 'none';
     document.getElementById('rematch-waiting').style.display = 'none';
     document.getElementById('post-game-status').textContent = '';
